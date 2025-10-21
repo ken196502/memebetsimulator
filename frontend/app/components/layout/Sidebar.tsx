@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { PieChart, Settings, TrendingUp, Newspaper, BarChart3 } from 'lucide-react'
+import { PieChart, Settings, TrendingUp, BarChart3 } from 'lucide-react'
 import SettingsDialog from './SettingsDialog'
 
 interface SidebarProps {
@@ -18,18 +18,7 @@ export default function Sidebar({ currentPage = 'ranking', onPageChange }: Sideb
       <aside className="w-16 border-r h-full p-2 flex flex-col items-center fixed md:relative left-0 top-0 z-50 bg-background md:inset-auto md:bg-transparent md:flex md:flex-col md:space-y-4 md:items-center md:justify-start md:p-2 md:w-16 md:h-full md:border-r">
         {/* Desktop Navigation */}
         <nav className="hidden md:flex md:flex-col md:space-y-4">
-           <button 
-            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-              currentPage === 'news' 
-                ? 'bg-secondary/80 text-secondary-foreground' 
-                : 'hover:bg-muted text-muted-foreground'
-            }`}
-            onClick={() => onPageChange?.('news')}
-            title="US Stock Movement"
-          >
-            <Newspaper className="w-5 h-5" />
-          </button>
-<button 
+          <button 
             className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
               currentPage === 'ranking' 
                 ? 'bg-secondary/80 text-secondary-foreground' 
@@ -75,18 +64,6 @@ export default function Sidebar({ currentPage = 'ranking', onPageChange }: Sideb
 
         {/* Mobile Navigation */}
         <nav className="md:hidden flex flex-row items-center justify-around fixed bottom-0 left-0 right-0 bg-background border-t h-16 px-4 z-50">
-          <button 
-            className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors ${
-              currentPage === 'news' 
-                ? 'bg-secondary/80 text-secondary-foreground' 
-                : 'hover:bg-muted text-muted-foreground'
-            }`}
-            onClick={() => onPageChange?.('news')}
-            title="US Stock Movement"
-          >
-            <Newspaper className="w-5 h-5" />
-            <span className="text-xs mt-1">News</span>
-          </button>
           <button 
             className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors ${
               currentPage === 'ranking' 

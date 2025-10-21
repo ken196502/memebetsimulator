@@ -231,3 +231,145 @@ async def test_xueqiu_connection():
             "message": f"测试失败: {str(e)}",
             "cookie_status": "error"
         }
+
+
+@router.get("/pump-fun-cookie")
+async def get_pump_fun_cookie_api(db: Session = Depends(get_db)):
+    """获取pump.fun cookie配置"""
+    try:
+        # 首先尝试从数据库获取
+        config = db.query(SystemConfig).filter(SystemConfig.key == "pump_fun_cookie").first()
+        if config and config.value:
+            # 如果数据库有配置，确保同步到全局变量
+            from services.pump_fun_market_data import set_pump_fun_cookie
+            set_pump_fun_cookie(config.value)
+            return {
+                "has_cookie": True,
+                "value": config.value
+            }
+        else:
+            # 如果数据库没有配置，检查文件
+            from config.settings import get_pump_fun_cookie
+            cookie_value = get_pump_fun_cookie()
+            if cookie_value:
+                return {
+                    "has_cookie": True,
+                    "value": cookie_value
+                }
+            else:
+                return {
+                    "has_cookie": False,
+                    "value": None
+                }
+    except Exception as e:
+        logger.error(f"获取pump.fun cookie配置时出错: {e}")
+        raise HTTPException(status_code=500, detail=f"获取配置失败: {str(e)}")
+
+
+@router.post("/pump-fun-cookie")
+async def save_pump_fun_cookie_api(request: ConfigUpdateRequest, db: Session = Depends(get_db)):
+    """保存pump.fun cookie配置"""
+    try:
+        if request.key != "pump_fun_cookie":
+            raise HTTPException(status_code=400, detail="配置键必须是 'pump_fun_cookie'")
+        
+        if not request.value or not request.value.strip():
+            raise HTTPException(status_code=400, detail="Cookie值不能为空")
+        
+        # 更新或创建配置
+        config = db.query(SystemConfig).filter(SystemConfig.key == request.key).first()
+        if config:
+            config.value = request.value
+            if request.description:
+                config.description = request.description
+        else:
+            config = SystemConfig(
+                key=request.key,
+                value=request.value,
+                description=request.description or "Pump.fun API访问Cookie"
+            )
+            db.add(config)
+        
+        db.commit()
+        
+        # 更新全局变量和客户端
+        from services.pump_fun_market_data import set_pump_fun_cookie
+        set_pump_fun_cookie(request.value)
+        
+        logger.info(f"Pump.fun cookie配置已保存")
+        
+        return {
+            "success": True,
+            "message": "Pump.fun cookie配置已保存并生效"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"保存pump.fun cookie配置时出错: {e}")
+        raise HTTPException(status_code=500, detail=f"保存配置失败: {str(e)}")
+
+
+@router.get("/pump-fun-test")
+async def test_pump_fun_connection(db: Session = Depends(get_db)):
+    """测试pump.fun连接"""
+    try:
+        # 获取当前配置的cookie
+        config = db.query(SystemConfig).filter(SystemConfig.key == "pump_fun_cookie").first()
+        cookie = None
+        
+        if config and config.value:
+            cookie = config.value
+        else:
+            # 尝试从文件获取
+            from config.settings import get_pump_fun_cookie
+            cookie = get_pump_fun_cookie()
+        
+        if not cookie:
+            return {
+                "success": False,
+                "message": "未配置pump.fun cookie",
+                "cookie_status": "not_configured"
+            }
+        
+        # 测试API调用
+        try:
+            from services.pump_fun_market_data import pump_fun_client
+            
+            # 更新客户端cookie
+            pump_fun_client.update_cookies(cookie)
+            
+            # 尝试获取币种列表
+            coins = pump_fun_client.get_coins_list(limit=5)
+            
+            if coins and len(coins) > 0:
+                return {
+                    "success": True,
+                    "message": f"Pump.fun连接成功，获取到{len(coins)}个代币",
+                    "cookie_status": "valid",
+                    "cookie_length": len(cookie),
+                    "sample_coins": [coin.get('name', 'Unknown') for coin in coins[:3]]
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Pump.fun连接成功但未获取到数据",
+                    "cookie_status": "valid_but_no_data",
+                    "cookie_length": len(cookie)
+                }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Pump.fun连接测试失败: {str(e)}",
+                "cookie_status": "error",
+                "cookie_length": len(cookie)
+            }
+            
+    except Exception as e:
+        logger.error(f"测试pump.fun连接失败: {e}")
+        return {
+            "success": False,
+            "message": f"测试失败: {str(e)}",
+            "cookie_status": "error"
+        }

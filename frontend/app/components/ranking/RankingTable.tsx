@@ -142,7 +142,7 @@ const RankingTable: React.FC<RankingTableProps> = ({ className = "" }) => {
         if (data.data && data.data.length > 0 && !sortColumn) {
           const availableScores = data.data
             .flatMap((row: RankingData) => Object.keys(row))
-            .filter((key, index, arr) => arr.indexOf(key) === index && scoreColumnKeys.has(key) && key !== 'Symbol')
+            .filter((key: string, index: number, arr: string[]) => arr.indexOf(key) === index && scoreColumnKeys.has(key) && key !== 'Symbol')
 
           setSortColumn(availableScores[0] || 'Symbol')
         }
@@ -185,14 +185,14 @@ const RankingTable: React.FC<RankingTableProps> = ({ className = "" }) => {
     const currentIndex = normalizedSelection
       ? sortedData.findIndex(row => normalizeSymbol(row.Symbol) === normalizedSelection)
       : -1
-    
+
     let newIndex = currentIndex
     if (direction === 'prev' && currentIndex > 0) {
       newIndex = currentIndex - 1
     } else if (direction === 'next' && currentIndex < sortedData.length - 1) {
       newIndex = currentIndex + 1
     }
-    
+
     if (newIndex !== currentIndex && newIndex >= 0) {
       handleSelectSymbol(sortedData[newIndex].Symbol)
     }
@@ -493,7 +493,7 @@ const RankingTable: React.FC<RankingTableProps> = ({ className = "" }) => {
 
       {!isMobile && (
         <div className="flex-1 border-l pl-4">
-          <StockViewer 
+          <StockViewer
             symbol={selectedSymbol}
             subtitle="click on a stock code to view chart"
           />

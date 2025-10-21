@@ -176,78 +176,70 @@ async def get_available_symbols(
 
 @router.get("/stock-info/{symbol}")
 async def get_stock_basic_info(symbol: str, db: Session = Depends(get_db)):
-    """Get basic information for a stock symbol using yfinance"""
+    """Get basic information for a stock symbol using xueqiu"""
     try:
-        import yfinance as yf
+        from services.xueqiu_market_data import xueqiu_client
         
-        # Create ticker object
-        ticker = yf.Ticker(symbol)
+        # 获取股票基本信息
+        url = 'https://stock.xueqiu.com/v5/stock/quote.json'
+        params = {'symbol': symbol, 'extend': 'detail'}
         
-        # Get company info
-        info = ticker.info
+        response = xueqiu_client.session.get(url, params=params, timeout=10)
+        response.raise_for_status()
         
-        if not info:
+        data = response.json()
+        
+        if not data or 'data' not in data or 'quote' not in data['data']:
             return {
                 "success": False,
                 "error": "No data available for symbol",
                 "data": []
             }
         
-        # Convert to list of key-value pairs
+        quote = data['data']['quote']
+        
+        # 转换数据格式
         stock_info = []
         
-        # Add company description/intro
-        if "longBusinessSummary" in info and info["longBusinessSummary"]:
-            stock_info.append({
-                "item": "Business Summary", 
-                "value": info["longBusinessSummary"]
-            })
-        
-        # Add key company information
+        # 添加基本信息
         key_fields = [
-            ("Company Name", "longName"),
-            ("Sector", "sector"),
-            ("Industry", "industry"),
-            ("Website", "website"),
-            ("Country", "country"),
-            ("Employees", "fullTimeEmployees"),
-            ("Market Cap", "marketCap"),
-            ("P/E Ratio", "trailingPE"),
-            ("Forward P/E", "forwardPE"),
-            ("PEG Ratio", "pegRatio"),
-            ("Price to Book", "priceToBook"),
-            ("Dividend Yield", "dividendYield"),
-            ("Beta", "beta"),
-            ("52 Week High", "fiftyTwoWeekHigh"),
-            ("52 Week Low", "fiftyTwoWeekLow"),
+            ("Company Name", "name"),
+            ("Symbol", "symbol"),
+            ("Current Price", "current"),
+            ("Change", "chg"),
+            ("Change Percent", "percent"),
+            ("High", "high"),
+            ("Low", "low"),
+            ("Open", "open"),
+            ("Previous Close", "last_close"),
             ("Volume", "volume"),
-            ("Average Volume", "averageVolume"),
+            ("Market Cap", "market_capital"),
+            ("P/E Ratio", "pe_ttm"),
+            ("52 Week High", "high52w"),
+            ("52 Week Low", "low52w"),
             ("Currency", "currency"),
             ("Exchange", "exchange"),
-            ("Quote Type", "quoteType")
         ]
         
         for display_name, field_name in key_fields:
-            if field_name in info and info[field_name] is not None:
-                value = info[field_name]
+            if field_name in quote and quote[field_name] is not None:
+                value = quote[field_name]
                 
-                # Format numeric values
+                # 格式化数值
                 if isinstance(value, (int, float)):
-                    if field_name == "marketCap":
-                        # Format market cap in billions/millions
+                    if field_name == "market_capital":
+                        # 格式化市值
                         if value >= 1e9:
                             value = f"${value/1e9:.2f}B"
                         elif value >= 1e6:
                             value = f"${value/1e6:.2f}M"
                         else:
                             value = f"${value:,.0f}"
-                    elif field_name in ["trailingPE", "forwardPE", "pegRatio", "priceToBook", "beta", 
-                                      "dividendYield", "fiftyTwoWeekHigh", "fiftyTwoWeekLow"]:
-                        if field_name == "dividendYield":
-                            value = f"{value*100:.2f}%"
-                        else:
-                            value = f"{value:.2f}"
-                    elif field_name in ["volume", "averageVolume", "fullTimeEmployees"]:
+                    elif field_name in ["pe_ttm", "high52w", "low52w"]:
+                        value = f"{value:.2f}"
+                    elif field_name == "percent":
+                        value = f"{value:.2f}%"
+                    elif field_name in ["volume"]:
                         value = f"{value:,}"
                 
                 stock_info.append({
@@ -261,12 +253,6 @@ async def get_stock_basic_info(symbol: str, db: Session = Depends(get_db)):
             "symbol": symbol
         }
         
-    except ImportError:
-        return {
-            "success": False,
-            "error": "yfinance not available",
-            "data": []
-        }
     except Exception as e:
         return {
             "success": False,

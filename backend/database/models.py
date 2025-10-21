@@ -47,8 +47,8 @@ class Position(Base):
     id = Column(Integer, primary_key=True, index=True)
     version = Column(String(100), nullable=False, default="v1")
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    symbol = Column(String(20), nullable=False)
-    name = Column(String(100), nullable=False)
+    symbol = Column(String(100), nullable=False)  # For pump.fun, this is mint address
+    name = Column(String(200), nullable=False)  # Meme coin names can be longer
     market = Column(String(10), nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
     available_quantity = Column(Integer, nullable=False, default=0)
@@ -68,8 +68,8 @@ class Order(Base):
     version = Column(String(100), nullable=False, default="v1")
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     order_no = Column(String(32), unique=True, nullable=False)
-    symbol = Column(String(20), nullable=False)
-    name = Column(String(100), nullable=False)
+    symbol = Column(String(100), nullable=False)  # For pump.fun, this is mint address
+    name = Column(String(200), nullable=False)  # Meme coin names can be longer
     market = Column(String(10), nullable=False)
     side = Column(String(10), nullable=False)
     order_type = Column(String(20), nullable=False)
@@ -92,8 +92,8 @@ class Trade(Base):
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    symbol = Column(String(20), nullable=False)
-    name = Column(String(100), nullable=False)
+    symbol = Column(String(100), nullable=False)  # For pump.fun, this is mint address
+    name = Column(String(200), nullable=False)  # Meme coin names can be longer
     market = Column(String(10), nullable=False)
     side = Column(String(10), nullable=False)
     price = Column(DECIMAL(18, 6), nullable=False)

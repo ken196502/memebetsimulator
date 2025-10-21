@@ -25,7 +25,6 @@ import Sidebar from '@/components/layout/Sidebar'
 import TradingPanel from '@/components/trading/TradingPanel'
 import Portfolio from '@/components/portfolio/Portfolio'
 import AssetCurve from '@/components/portfolio/AssetCurve'
-import NewsPanel from '@/components/news/NewsPanel'
 import RankingTable from '@/components/ranking/RankingTable'
 
 interface User {
@@ -46,7 +45,6 @@ interface Order { id: number; order_no: string; symbol: string; name: string; ma
 interface Trade { id: number; order_id: number; user_id: number; symbol: string; name: string; market: string; side: string; price: number; quantity: number; commission: number; trade_time: string }
 
 const PAGE_TITLES: Record<string, string> = {
-  news: 'GMT Eight News',
   portfolio: 'Simulated US Stocks Trading',
   'asset-curve': 'Asset Curve Overview',
   ranking: 'Factor Ranking',
@@ -138,12 +136,6 @@ function App() {
         return (
           <main className="flex-1 p-6 overflow-auto">
             <AssetCurve />
-          </main>
-        )
-      case 'news':
-        return (
-          <main className="flex-1 overflow-auto">
-            <NewsPanel />
           </main>
         )
       case 'ranking':

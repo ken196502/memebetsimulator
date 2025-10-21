@@ -8,7 +8,7 @@ import os
 from database.connection import engine, Base, SessionLocal
 from database.models import TradingConfig, User, SystemConfig
 from config.settings import DEFAULT_TRADING_CONFIGS
-app = FastAPI(title="Simulated US Stocks Trading API")
+app = FastAPI(title="Pump.fun Meme Coin Trading Simulator")
 
 # Health check endpoint
 @app.get("/api/health")
@@ -67,6 +67,10 @@ def on_startup():
     finally:
         db.close()
     
+    # Initialize pump.fun client with cookie
+    from services.pump_fun_market_data import initialize_pump_fun_client
+    initialize_pump_fun_client()
+    
     # Start order scheduler
     from services.order_scheduler import start_order_scheduler
     start_order_scheduler()
@@ -84,15 +88,15 @@ from api.market_data_routes import router as market_data_router
 from api.order_routes import router as order_router
 from api.account_routes import router as account_router
 from api.config_routes import router as config_router
-from api.news_routes import router as news_router
 from api.ranking_routes import router as ranking_router
+from api.pump_routes import router as pump_router
 
 app.include_router(market_data_router)
 app.include_router(order_router)
 app.include_router(account_router)
 app.include_router(config_router)
-app.include_router(news_router)
 app.include_router(ranking_router)
+app.include_router(pump_router)
 
 # WebSocket endpoint
 from api.ws import websocket_endpoint
