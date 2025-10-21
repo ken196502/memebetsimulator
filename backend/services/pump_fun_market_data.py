@@ -4,7 +4,7 @@ Pump.fun market data service for fetching meme coin data
 import requests
 import logging
 from typing import Dict, List, Any, Optional
-from backend.config.settings import get_pump_fun_cookie
+from config.settings import get_pump_fun_cookie
 
 logger = logging.getLogger(__name__)
 
@@ -139,12 +139,6 @@ class PumpFunMarketData:
                 return self._normalize_api_response(data)
             
             logger.warning(f"API returned status {response.status_code}, response: {response.text[:200]}")
-            
-            # Try to get some sample data even if API fails
-            if response.status_code == 530:
-                logger.info("API returned 530, trying alternative approach or returning mock data for testing")
-                return self._get_mock_coins_data(limit)
-            
             return []
             
         except Exception as e:
@@ -242,51 +236,6 @@ class PumpFunMarketData:
         except:
             return 0.0
     
-    def _get_mock_coins_data(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """Return mock coins data for testing when API is unavailable"""
-        mock_coins = [
-            {
-                "mint": "11111111111111111111111111111112",
-                "name": "TestCoin",
-                "symbol": "TEST",
-                "description": "A test meme coin for simulation",
-                "image_uri": "https://via.placeholder.com/100",
-                "usd_market_cap": 100000.0,
-                "total_supply": 1000000000,
-                "created_timestamp": 1700000000,
-                "last_trade_timestamp": 1700001000,
-                "nsfw": False,
-                "complete": False
-            },
-            {
-                "mint": "22222222222222222222222222222223",
-                "name": "MoonDoge",
-                "symbol": "MDOGE",
-                "description": "Going to the moon with this doge",
-                "image_uri": "https://via.placeholder.com/100",
-                "usd_market_cap": 250000.0,
-                "total_supply": 1000000000,
-                "created_timestamp": 1700000100,
-                "last_trade_timestamp": 1700001100,
-                "nsfw": False,
-                "complete": False
-            },
-            {
-                "mint": "33333333333333333333333333333334",
-                "name": "PepeCoin",
-                "symbol": "PEPE",
-                "description": "Rare pepe meme coin",
-                "image_uri": "https://via.placeholder.com/100",
-                "usd_market_cap": 500000.0,
-                "total_supply": 1000000000,
-                "created_timestamp": 1700000200,
-                "last_trade_timestamp": 1700001200,
-                "nsfw": False,
-                "complete": False
-            }
-        ]
-        
-        return mock_coins[:limit]
     
     def get_trending_coins(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -343,7 +292,7 @@ def get_pump_fun_coin(mint_address: str) -> Optional[Dict[str, Any]]:
 def get_pump_fun_cookie() -> Optional[str]:
     """Get pump.fun cookie from configuration"""
     try:
-        from backend.repositories.config_repo import get_system_config
+        from repositories.config_repo import get_system_config
         config = get_system_config("pump_fun_cookie")
         return config.value if config else None
     except Exception as e:
@@ -383,15 +332,6 @@ def get_last_price_from_pump_fun(mint_address: str) -> float:
             if supply > 0:
                 return market_cap / supply
         
-        # Fallback: if no coin data, check if it's a mock coin and return mock price
-        mock_prices = {
-            "11111111111111111111111111111112": 0.0001,  # TestCoin
-            "22222222222222222222222222222223": 0.00025,  # MoonDoge
-            "33333333333333333333333333333334": 0.0005,   # PepeCoin
-        }
-        if mint_address in mock_prices:
-            return mock_prices[mint_address]
-            
         return 0.0
     except Exception as e:
         logger.error(f"Error getting price for {mint_address}: {e}")

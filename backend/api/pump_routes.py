@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Any, Optional
 import logging
 
-from backend.services.market_data import (
+from services.market_data import (
     get_pump_fun_trending_coins,
     get_pump_fun_new_coins,
     get_last_price,
 )
-from backend.services.pump_fun_market_data import (
+from services.pump_fun_market_data import (
     pump_fun_client,
     get_pump_fun_coin,
     get_pump_fun_coins,
