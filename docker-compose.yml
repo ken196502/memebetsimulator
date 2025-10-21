@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: usmover
+    restart: unless-stopped
+    ports:
+      - "2611:2611"  # 暴露到宿主机2611端口
+    volumes:
+      - ./data:/app/data  # 持久化数据目录
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.usmover.rule=Host(`usmm.subx.fun`)"
+      - "traefik.http.routers.usmover.entrypoints=websecure"
+      - "traefik.http.routers.usmover.tls.certresolver=letsencrypt"
+      - "traefik.http.services.usmover.loadbalancer.server.port=2611"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
